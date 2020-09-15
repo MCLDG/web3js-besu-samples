@@ -1,4 +1,4 @@
-# Besu private transactions
+# Besu privacy and permissions
 This repo started life as https://github.com/PegaSysEng/web3js-eea. I removed all the web3-eea code and refactored the examples to use the web3-eea npm library, instead of using the library source code that is merged into the repo. I also removed all the extraneous folders to make this a simple demo of how to use Besu.
 
 The goal is to show how to develop applications using Besu privacy and permissioning.
@@ -83,7 +83,7 @@ Once the pre-requisites are installed you can compile the smart contracts. The J
 truffle compile
 ```
 
-Now generate the Besu web3j Java wrapper code:
+TBD: Not necessary for most tests. Now generate the Besu web3j Java wrapper code:
 
 ```
 web3j solidity generate -b ./Simple.bin -a ./Simple.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
