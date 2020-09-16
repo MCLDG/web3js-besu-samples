@@ -71,7 +71,7 @@ module.exports = async () => {
   const greeterContractAddress = await privacyGroup
     .createPrivateContract(greeterBinary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
     .then(privateTransactionHash => {
-      console.log("Private Transaction Receipt\n", privateTransactionHash);
+      console.log("Private Transaction Hash\n", privateTransactionHash);
       return privacyGroup.getPrivateContractAddress(privateTransactionHash, orion.node1.publicKey)
     })
     .catch(console.error);

@@ -52,34 +52,41 @@ const getPrivateNonce = (account, privacyGroupId) => {
 }
 
 // get public nonce of account
-const getPublicNonce= (account) => {
+const getPublicNonce = (account) => {
   return web3.eth.getTransactionCount(account, "pending");
 }
 
-const sendPrivacyMarkerTransaction = (enclaveKey, besuPrivateKey) => {
+// nonce is optional
+const sendPrivacyMarkerTransaction = (enclaveKey, besuPrivateKey, nonce) => {
   return new Promise((resolve, reject) => {
     const besuAccount = web3.eth.accounts.privateKeyToAccount(
       `0x${besuPrivateKey}`
     );
-    getPublicNonce(besuAccount.address)
-      .then(count => {
-        const rawTx = {
-          nonce: web3.utils.numberToHex(count),
-          from: besuAccount.address,
-          to: "0x000000000000000000000000000000000000007e",
-          value: 0,
-          data: enclaveKey,
-          gasPrice: "0xFFFFF",
-          gasLimit: "0xFFFFF"
-        };
-        const tx = new Tx(rawTx);
-        tx.sign(Buffer.from(besuPrivateKey, "hex"));
-        const hexTx = `0x${tx.serialize().toString("hex")}`;
-        return web3.eth
-          .sendSignedTransaction(hexTx)
-          .on("receipt", r => {
-            resolve(r);
-          });
+    let count;
+    if (nonce !== undefined) {
+      count = nonce;
+    }
+    else {
+      count = getPublicNonce(besuAccount.address);
+    }
+    console.log("Creating Private Marker Transaction with public nonce", count);
+
+    const rawTx = {
+      nonce: web3.utils.numberToHex(count),
+      from: besuAccount.address,
+      to: "0x000000000000000000000000000000000000007e",
+      value: 0,
+      data: enclaveKey,
+      gasPrice: "0xFFFFF",
+      gasLimit: "0xFFFFF"
+    };
+    const tx = new Tx(rawTx);
+    tx.sign(Buffer.from(besuPrivateKey, "hex"));
+    const hexTx = `0x${tx.serialize().toString("hex")}`;
+    return web3.eth
+      .sendSignedTransaction(hexTx)
+      .on("receipt", r => {
+        resolve(r);
       })
       .catch(e => {
         reject(e);

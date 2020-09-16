@@ -1,5 +1,9 @@
 /**
- * Send transactions to a privacy group in batches
+ * Send transactions to a privacy group in batches. 
+ * 
+ * Creates a privacy group, deploys a smart contract to the privacy group, then execute the smart contract.
+ * 
+ * You will see 2 batches of transactions, each batch of size 5 (see vars TX_COUNT and BATCH_SIZE below)
  */
 
 const fs = require("fs");
@@ -26,8 +30,8 @@ const web3Node1 = new EEAClient(new Web3(besu.node1.url), 2018);
 
 /*
   Transactions are sent in batches.
-  TX_COUNT defines the total of transactions
-  BATCH_SIZE defines how many transactions will be sent at once
+  - TX_COUNT defines the total of transactions
+  - BATCH_SIZE defines how many transactions will be sent at once
 */
 const TX_COUNT = 10;
 const BATCH_SIZE = 5;
@@ -53,7 +57,7 @@ const callGenericFunctionOnContract = (
       ? web3.eth.abi.encodeParameters(functionAbi.inputs, [value]).slice(2)
       : null;
 
-  console.log(`Calling greeter smart contract at address: ${address} with nonce: ${nonce}`);
+  console.log(`Calling greeter smart contract at address: ${address} with private nonce: ${nonce}`);
 
   const functionCall = {
     to: address,
@@ -102,7 +106,7 @@ module.exports = async () => {
   const greeterContractAddress = await privacyGroup
     .createPrivateContract(greeterBinary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
     .then(privateTransactionHash => {
-      console.log("Private Transaction Receipt\n", privateTransactionHash);
+      console.log("Private Transaction Hash\n", privateTransactionHash);
       return privacyGroup.getPrivateContractAddress(privateTransactionHash, orion.node1.publicKey)
     })
     .catch(console.error);
@@ -114,7 +118,8 @@ module.exports = async () => {
     .address;
 
   let privateNonce = await privacyGroup.getPrivateNonce(besuAccount, privacyGroupId);
-  console.log(`privateNonce: ${privateNonce}`);
+  let publicNonce = await privacyGroup.getPublicNonce(besuAccount);
+  console.log(`publicNonce for address ${besuAccount} is: ${publicNonce}`);
 
   const pool = new PromisePool({ concurrency: BATCH_SIZE });
 
@@ -130,13 +135,11 @@ module.exports = async () => {
         null,
         privateNonce++
       ).then(enclaveKey => {
-//        console.log(`sendPrivacyMarkerTransaction at enclave: ${besu.node1.privateKey}`);
         return privacyGroup.sendPrivacyMarkerTransaction(
-          enclaveKey, besu.node1.privateKey
+          enclaveKey, besu.node1.privateKey, publicNonce++
         );
       })
         .then(pmtRcpt => {
-//          console.log(`PMT receipt: `, pmtRcpt);
           return printPrivTxDetails(pmtRcpt);
         })
         .catch(error => {
