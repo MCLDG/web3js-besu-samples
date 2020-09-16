@@ -26,7 +26,23 @@ module.exports = async () => {
     privacyGroupId
   );
 
-  console.log("Add Node3 to the privacy group: ", privacyGroupId);
+  console.log("Non-owner tries to add Node3 to the privacy group: ", privacyGroupId);
+  const addResultAttempt = await node1.privx.addToPrivacyGroup({
+    participants: [orion.node3.publicKey],
+    enclaveKey: orion.node1.publicKey,
+    privateFrom: orion.node2.publicKey,
+    privacyGroupId: privacyGroupId,
+    privateKey: besu.node2.privateKey
+  });
+  console.log("Added Node3 to privacy group: ", privacyGroupId);
+  console.log(addResultAttempt);
+
+  const failedReceiptFromNode3 = await node3.priv.getTransactionReceipt(
+    addResultAttempt.commitmentHash,
+    orion.node3.publicKey
+  );
+
+  console.log("Owner of privacy group adds Node3 to the privacy group: ", privacyGroupId);
   const addResult = await node1.privx.addToPrivacyGroup({
     participants: [orion.node3.publicKey],
     enclaveKey: orion.node1.publicKey,
@@ -51,7 +67,7 @@ module.exports = async () => {
     privacyGroupId
   );
 
-  console.log("Remove Node3 from the privacy group: ", privacyGroupId);
+  console.log("Owner of privacy group removes Node3 from the privacy group: ", privacyGroupId);
   const removeResult = await node1.privx.removeFromPrivacyGroup({
     participant: orion.node3.publicKey,
     enclaveKey: orion.node1.publicKey,

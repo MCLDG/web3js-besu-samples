@@ -4,10 +4,11 @@ const path = require("path");
 const Web3 = require("web3");
 const EEAClient = require("web3-eea");
 
-const SimpleAbi = (JSON.parse(fs.readFileSync(path.join(__dirname, "../../build/contracts/Simple.json"), 'utf8'))).abi;
+const SimpleAbi = (JSON.parse(
+  fs.readFileSync(path.join(__dirname, "../../build/contracts/Simple.json"), 'utf8'))
+).abi;
 
 const { orion, besu } = require("../keys.js");
-
 
 const storeValueFromNode1 = (address, value, privacyGroupId) => {
   const web3 = new EEAClient(new Web3(besu.node1.url), 2018);

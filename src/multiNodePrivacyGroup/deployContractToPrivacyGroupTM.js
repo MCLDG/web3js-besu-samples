@@ -33,62 +33,6 @@ const web3Node3 = new EEAClient(new Web3(besu.node3.url), 2018);
 
 let contractAddress;
 
-const createPrivacyGroup = () => {
-  return privacyGroup.createPrivacyGroup([orion.node1.publicKey, orion.node2.publicKey]);
-};
-
-const createPrivateContract = privacyGroupId => {
-  const contractOptions = {
-    data: `${binary}`,
-    privateFrom: orion.node1.publicKey,
-    privacyGroupId,
-    privateKey: besu.node1.privateKey
-  };
-  return web3.priv.distributeRawTransaction(contractOptions);
-};
-
-const sendPrivacyMarkerTransaction = enclaveKey => {
-  return new Promise((resolve, reject) => {
-    const besuAccount = web3.eth.accounts.privateKeyToAccount(
-      `0x${besu.node1.privateKey}`
-    );
-    web3.eth
-      .getTransactionCount(besuAccount.address, "pending")
-      .then(count => {
-        const rawTx = {
-          nonce: web3.utils.numberToHex(count),
-          from: besuAccount.address,
-          to: "0x000000000000000000000000000000000000007e",
-          value: 0,
-          data: enclaveKey,
-          gasPrice: "0xFFFFF",
-          gasLimit: "0xFFFFF"
-        };
-        const tx = new Tx(rawTx);
-        tx.sign(Buffer.from(besu.node1.privateKey, "hex"));
-        const serializedTx = tx.serialize();
-        return web3.eth
-          .sendSignedTransaction(`0x${serializedTx.toString("hex")}`)
-          .on("receipt", r => {
-            resolve(r);
-          });
-      })
-      .catch(e => {
-        reject(e);
-      });
-  });
-};
-
-const getTransactionReceipts = txHash => {
-  // eslint-disable-next-line promise/avoid-new
-  return new Promise((resolve, reject) => {
-    web3Node2.eth
-      .getTransactionReceipt(txHash)
-      .then(resolve)
-      .catch(reject);
-  });
-};
-
 const fetchFromOrion = txHash => {
   web3.priv
     .getTransactionReceipt(txHash, orion.node1.publicKey)
@@ -117,22 +61,26 @@ module.exports = async () => {
   console.log("Created new privacy group with ID:", privacyGroupId);
 
   // returns the 32-byte enclave key. The enclave key is a pointer to the private transaction in Orion
-  const enclaveKey = await createPrivateContract(privacyGroupId);
+  const enclaveKey = await privacyGroup.createPrivateContractNoPMT(
+    binary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey
+    );
   console.log(`Enclave key: ${enclaveKey}`);
-  const privacyMarkerTransactionResult = await sendPrivacyMarkerTransaction(
-    enclaveKey
+
+  const privacyMarkerTransactionResult = await privacyGroup.sendPrivacyMarkerTransaction(
+    enclaveKey, besu.node1.privateKey
   );
 
   // get the transaction receipts of the privacy marker
-  await getTransactionReceipts(
+  await privacyGroup.getTransactionReceipts(
     privacyMarkerTransactionResult.transactionHash
   ).then(privateTransactionReceipt => {
     console.log("Private Transaction Receipt for privacy marker TX\n", privateTransactionReceipt);
   });
 
   setTimeout(() => {
-    console.log(`now you have to run:\n export PRIVACY_GROUP_ID=${privacyGroupId}`);
+    console.log(`now you have to run:`);
     console.log(` export CONTRACT_ADDRESS=${contractAddress}`);
+    console.log(` export PRIVACY_GROUP_ID=${privacyGroupId}`);
   }, 2000);
 
   // get the transaction receipts of the private contract deployment

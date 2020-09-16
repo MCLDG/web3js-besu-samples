@@ -1,10 +1,28 @@
+/**
+ * Send transactions to a privacy group in batches
+ */
+
+const fs = require("fs");
+const path = require("path");
+
 const Web3 = require("web3");
-const Tx = require("ethereumjs-tx");
+const EEAClient = require("web3-eea");
 const PromisePool = require("async-promise-pool");
-const EEAClient = require("../../src");
+
+const privacyGroup = require("../privacyGroupManagement/managePrivacyGroup");
+
 const { orion, besu } = require("../keys.js");
 
+const greeterBinary = JSON.parse(fs.readFileSync(
+  path.join(__dirname, "../../build/contracts/greeter.json")
+)).bytecode;
+
+const greeterAbi = JSON.parse(fs.readFileSync(
+  path.join(__dirname, "../../build/contracts/greeter.json")
+)).abi;
+
 const web3 = new EEAClient(new Web3(besu.node1.url), 2018);
+const web3Node1 = new EEAClient(new Web3(besu.node1.url), 2018);
 
 /*
   Transactions are sent in batches.
@@ -14,76 +32,53 @@ const web3 = new EEAClient(new Web3(besu.node1.url), 2018);
 const TX_COUNT = 10;
 const BATCH_SIZE = 5;
 
-// options used to create a privacy group with only one member
-const privacyOptions = {
-  privateFrom: orion.node1.publicKey,
-  privateFor: [orion.node1.publicKey],
-  privateKey: besu.node1.privateKey
+const callGenericFunctionOnContract = (
+  web3,
+  orionPrivateFrom,
+  besuPrivateKey,
+  address,
+  privacyGroupId,
+  method,
+  value,
+  nonce
+) => {
+  const contract = new web3.eth.Contract(greeterAbi);
+
+  const functionAbi = contract._jsonInterface.find(e => {
+    return e.name === method;
+  });
+
+  const functionArgs =
+    value !== null
+      ? web3.eth.abi.encodeParameters(functionAbi.inputs, [value]).slice(2)
+      : null;
+
+  console.log(`Calling greeter smart contract at address: ${address} with nonce: ${nonce}`);
+
+  const functionCall = {
+    to: address,
+    data:
+      functionArgs !== null
+        ? functionAbi.signature + functionArgs
+        : functionAbi.signature,
+    privateFrom: orionPrivateFrom,
+    privacyGroupId: privacyGroupId,
+    privateKey: besuPrivateKey,
+    nonce: nonce
+  };
+  return web3.priv.distributeRawTransaction(functionCall);
 };
 
-const deployContractData =
-  "0x608060405234801561001057600080fd5b5060405161018e38038061018e8339818101604052602081101561003357600080fd5b8101908080519060200190929190505050806000819055507f85bea11d86cefb165374e0f727bacf21dc2f4ea816493981ecf72dcfb212a410816040518082815260200191505060405180910390a15060fd806100916000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c806360fe47b11460375780636d4ce63c146062575b600080fd5b606060048036036020811015604b57600080fd5b8101908080359060200190929190505050607e565b005b606860bf565b6040518082815260200191505060405180910390f35b806000819055507f85bea11d86cefb165374e0f727bacf21dc2f4ea816493981ecf72dcfb212a410816040518082815260200191505060405180910390a150565b6000805490509056fea265627a7a723158207735a32daa767059dd230ee7718eb7f09ff35ca8ba54249b53ea1c2e12b98f8564736f6c634300051100320000000000000000000000000000000000000000000000000000000000000001";
-
-// get nonce of account in the privacy group
-function getPrivateNonce(account) {
-  return web3.priv.getTransactionCount({
-    ...privacyOptions,
-    from: account
-  });
-}
-
-// get public nonce of account
-function getPublicNonce(account) {
-  return web3.eth.getTransactionCount(account, "pending");
-}
-
-// distribute payload to participants
-function distributePayload(payload, nonce) {
-  return web3.priv.distributeRawTransaction({
-    ...privacyOptions,
-    data: payload,
-    nonce
-  });
-}
-
-// create and sign PMT
-function sendPMT(sender, enclaveKey, nonce) {
-  const rawTx = {
-    nonce: web3.utils.numberToHex(nonce), // PMT nonce
-    from: sender,
-    to: "0x000000000000000000000000000000000000007e", // privacy precompile address
-    data: enclaveKey,
-    gasLimit: "0x5a88"
-  };
-
-  const tx = new Tx(rawTx);
-  tx.sign(Buffer.from(besu.node1.privateKey, "hex"));
-
-  const hexTx = `0x${tx.serialize().toString("hex")}`;
-
-  // eslint-disable-next-line promise/avoid-new
-  return new Promise((resolve, reject) => {
-    web3.eth
-      .sendSignedTransaction(hexTx)
-      .once("receipt", rcpt => {
-        resolve(rcpt);
-      })
-      .on("error", error => {
-        reject(error);
-      });
-  });
-}
-
 function printPrivTxDetails(pmtRcpt) {
-  return web3.priv
-    .getTransactionReceipt(pmtRcpt.transactionHash, besu.node1.privateKey)
+  return privacyGroup
+    .getTransactionReceipts(pmtRcpt.transactionHash)
     .then(privTxRcpt => {
       console.log(
         `=== Private TX ${privTxRcpt.transactionHash}\n` +
-          `  > Status ${privTxRcpt.status}\n` +
-          `  > Block #${pmtRcpt.blockNumber}\n` +
-          `  > PMT Index #${pmtRcpt.transactionIndex}\n` +
-          `  > PMT Hash ${pmtRcpt.transactionHash}\n`
+        `  > Status ${privTxRcpt.status}\n` +
+        `  > Block #${pmtRcpt.blockNumber}\n` +
+        `  > PMT Index #${pmtRcpt.transactionIndex}\n` +
+        `  > PMT Hash ${pmtRcpt.transactionHash}\n`
       );
       return Promise.resolve();
     });
@@ -96,26 +91,59 @@ function printPrivTxDetails(pmtRcpt) {
   
   1. Find the expected public and private nonce for the sender account
   2. Ditribute the private transaction (incrementing the private nonce)
-  3. Create a PMT for each private transaction (incrementing the public nonce)
+  3. Create a Private Market Transaction for each private transaction (incrementing the public nonce)
 */
-module.exports = async () => {
-  const sender = "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73";
 
-  const privateNonce = await getPrivateNonce(sender);
-  const publicNonce = await getPublicNonce(sender);
+module.exports = async () => {
+  console.log("Creating privacy group");
+  const privacyGroupId = await privacyGroup.createPrivacyGroup([orion.node1.publicKey, orion.node2.publicKey]);
+
+  console.log("Deploying smart contract to privacy group: ", privacyGroupId);
+  const greeterContractAddress = await privacyGroup
+    .createPrivateContract(greeterBinary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
+    .then(privateTransactionHash => {
+      console.log("Private Transaction Receipt\n", privateTransactionHash);
+      return privacyGroup.getPrivateContractAddress(privateTransactionHash, orion.node1.publicKey)
+    })
+    .catch(console.error);
+  console.log("greeter smart contract deployed at address: ", greeterContractAddress);
+
+  const besuAccount = web3.eth.accounts.privateKeyToAccount(
+    `0x${besu.node1.privateKey}`
+  )
+    .address;
+
+  let privateNonce = await privacyGroup.getPrivateNonce(besuAccount, privacyGroupId);
+  console.log(`privateNonce: ${privateNonce}`);
 
   const pool = new PromisePool({ concurrency: BATCH_SIZE });
 
   for (let i = 0; i < TX_COUNT; i += 1) {
     pool.add(() => {
-      return distributePayload(deployContractData, privateNonce + i)
-        .then(enclaveKey => {
-          return sendPMT(sender, enclaveKey, publicNonce + i);
+      return callGenericFunctionOnContract(
+        web3Node1,
+        orion.node1.publicKey,
+        besu.node1.privateKey,
+        greeterContractAddress,
+        privacyGroupId,
+        "greet",
+        null,
+        privateNonce++
+      ).then(enclaveKey => {
+//        console.log(`sendPrivacyMarkerTransaction at enclave: ${besu.node1.privateKey}`);
+        return privacyGroup.sendPrivacyMarkerTransaction(
+          enclaveKey, besu.node1.privateKey
+        );
+      })
+        .then(pmtRcpt => {
+//          console.log(`PMT receipt: `, pmtRcpt);
+          return printPrivTxDetails(pmtRcpt);
         })
-        .then(printPrivTxDetails);
+        .catch(error => {
+          console.log("Error calling callGenericFunctionOnContract: ", error);
+        });
     });
   }
-
   await pool.all();
 };
 

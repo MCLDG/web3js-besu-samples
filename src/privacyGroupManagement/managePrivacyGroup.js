@@ -1,5 +1,6 @@
 const Web3 = require("web3");
 const EEAClient = require("web3-eea");
+const Tx = require("ethereumjs-tx");
 
 const { orion, besu } = require("../keys.js");
 
@@ -51,16 +52,91 @@ const getPrivateNonce = (account, privacyGroupId) => {
 }
 
 // get public nonce of account
-function getPublicNonce(account) {
+const getPublicNonce= (account) => {
   return web3.eth.getTransactionCount(account, "pending");
 }
+
+const sendPrivacyMarkerTransaction = (enclaveKey, besuPrivateKey) => {
+  return new Promise((resolve, reject) => {
+    const besuAccount = web3.eth.accounts.privateKeyToAccount(
+      `0x${besuPrivateKey}`
+    );
+    getPublicNonce(besuAccount.address)
+      .then(count => {
+        const rawTx = {
+          nonce: web3.utils.numberToHex(count),
+          from: besuAccount.address,
+          to: "0x000000000000000000000000000000000000007e",
+          value: 0,
+          data: enclaveKey,
+          gasPrice: "0xFFFFF",
+          gasLimit: "0xFFFFF"
+        };
+        const tx = new Tx(rawTx);
+        tx.sign(Buffer.from(besuPrivateKey, "hex"));
+        const hexTx = `0x${tx.serialize().toString("hex")}`;
+        return web3.eth
+          .sendSignedTransaction(hexTx)
+          .on("receipt", r => {
+            resolve(r);
+          });
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
+};
+
+const createPrivateContract = (contractBinary, orionPrivateFrom, privacyGroupId, besuPrivateKey) => {
+  const contractOptions = {
+    data: `${contractBinary}`,
+    privateFrom: orionPrivateFrom,
+    privacyGroupId: privacyGroupId,
+    privateKey: besuPrivateKey
+  };
+  return web3.eea.sendRawTransaction(contractOptions);
+};
+
+const createPrivateContractNoPMT = (contractBinary, orionPrivateFrom, privacyGroupId, besuPrivateKey) => {
+  const contractOptions = {
+    data: `${contractBinary}`,
+    privateFrom: orionPrivateFrom,
+    privacyGroupId: privacyGroupId,
+    privateKey: besuPrivateKey
+  };
+  return web3.priv.distributeRawTransaction(contractOptions);
+};
+
+const getPrivateContractAddress = (transactionHash, orionPrivateFrom) => {
+  return web3.priv
+    .getTransactionReceipt(transactionHash, orionPrivateFrom)
+    .then(privateTransactionReceipt => {
+      console.log("getPrivateContractAddress Private Transaction Receipt\n", privateTransactionReceipt);
+
+      return privateTransactionReceipt.contractAddress;
+    });
+};
+
+const getTransactionReceipts = txHash => {
+  return new Promise((resolve, reject) => {
+    web3.eth
+      .getTransactionReceipt(txHash)
+      .then(resolve)
+      .catch(reject);
+  });
+};
 
 module.exports = {
   createPrivacyGroup,
   deletePrivacyGroup,
   findPrivacyGroupForNode,
   getPrivateNonce,
-  getPublicNonce
+  getPublicNonce,
+  sendPrivacyMarkerTransaction,
+  createPrivateContract,
+  createPrivateContractNoPMT,
+  getPrivateContractAddress,
+  getTransactionReceipts
 };
 
 if (require.main === module) {

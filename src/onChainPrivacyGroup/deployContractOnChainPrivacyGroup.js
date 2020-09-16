@@ -19,24 +19,6 @@ const greeterAbi = JSON.parse(fs.readFileSync(
 const web3Node1 = new EEAClient(new Web3(besu.node1.url), 2018);
 const web3Node2 = new EEAClient(new Web3(besu.node2.url), 2018);
 
-const createGreeterContract = privacyGroupId => {
-  const contractOptions = {
-    data: `0x${greeterBinary}`,
-    privateFrom: orion.node1.publicKey,
-    privacyGroupId,
-    privateKey: besu.node1.privateKey
-  };
-  return web3Node1.eea.sendRawTransaction(contractOptions);
-};
-
-const getPrivateContractAddress = transactionHash => {
-  return web3Node1.priv
-    .getTransactionReceipt(transactionHash, orion.node1.publicKey)
-    .then(privateTransactionReceipt => {
-      return privateTransactionReceipt.contractAddress;
-    });
-};
-
 const callGenericFunctionOnContract = (
   web3,
   privateFrom,
@@ -85,12 +67,14 @@ module.exports = async () => {
   const privacyGroupId = await privacyGroup.createPrivacyGroup([orion.node1.publicKey, orion.node2.publicKey]);
   console.log("Created new on-chain privacy group with ID:", privacyGroupId);
 
-  console.log("Deploying greeter smart contract to privacy group: ", privacyGroupId);
-  const greeterContractAddress = await createGreeterContract(
-    privacyGroupId
-  ).then(res => {
-    return getPrivateContractAddress(res);
-  });
+  console.log("Deploying smart contract to privacy group: ", privacyGroupId);
+  const greeterContractAddress = await privacyGroup
+    .createPrivateContract(greeterBinary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
+    .then(privateTransactionHash => {
+      console.log("Private Transaction Receipt\n", privateTransactionHash);
+      return privacyGroup.getPrivateContractAddress(privateTransactionHash, orion.node1.publicKey)
+    })
+    .catch(console.error);
   console.log("greeter smart contract deployed at address: ", greeterContractAddress);
 
   // TODO - is not working at present

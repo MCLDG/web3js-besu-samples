@@ -13,6 +13,8 @@ npm install
 ./run-privacy.sh -c ibft2
 ```
 
+You will need to wait 30-60s before executing any commands against the network.
+
 Privacy in Besu can use Privacy Groups, where contracts and transactions are sent to groups of nodes,
 and Besu handle the distribution to the nodes in the group. Privacy groups can either be on-chain
 or off-chain. You'll need to start the Besu network in the right privacy mode, otherwise you may see an
@@ -92,3 +94,12 @@ ls -lR ../../../../../org
 
 ## Deploy and execute the smart contract
 Details on how to deploy and execute the smart contracts can be found in each of the individual src folders.
+
+## Troubleshooting
+If you see this error:
+
+```
+Error: Invalid JSON RPC response: ""
+```
+
+It's possible that your Besu network is not ready to accept requests. It usually takes 30-60s after starting before the network is ready to process requests.
