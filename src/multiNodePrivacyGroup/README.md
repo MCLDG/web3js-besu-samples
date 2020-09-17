@@ -11,6 +11,8 @@ cd besu-sample-networks
 ./run-privacy.sh -c ibft2 -p offchain
 ```
 
+You will need to wait 30-60s before executing any commands against the network.
+
 ## Deploy and execute the smart contract
 Create a privacy group and deploy the smart contract to the privacy group. The application `deployContract*.js` will create the contract as a private contract, and retrieve the private contract address. The difference between the two deployContract*.js scripts can be found in the header comments.
 
@@ -49,4 +51,11 @@ Try storing values using Node 2 & 3. Expect to see an error when trying to use N
 ```
 node storeValueFromNode2.js
 node storeValueFromNode3.js
+```
+
+Get the values from the privacy groups synchronously and asynchronously:
+
+```
+node getValueFromNodes.js
+node getValueFromNodesSync.js
 ```

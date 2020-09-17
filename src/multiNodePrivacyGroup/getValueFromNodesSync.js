@@ -1,5 +1,7 @@
 /**
- * Reads from the smart contract asynchronously, using sendRawTranaction
+ * Reads from the smart contract synchronously, using priv.call.
+ * 
+ * Note that priv.call is read-only, synchronous, and does not consume gas.
  */
 
 const fs = require('fs')
@@ -14,11 +16,10 @@ const SimpleAbi = (JSON.parse(fs.readFileSync(
 
 const { orion, besu } = require("../keys.js");
 
-const getValue = (url, address, privateFrom, privacyGroupId, privateKey) => {
+const getValue = (url, address, privacyGroupId) => {
   const web3 = new EEAClient(new Web3(url), 2018);
   const contract = new web3.eth.Contract(SimpleAbi);
 
-  // eslint-disable-next-line no-underscore-dangle
   const functionAbi = contract._jsonInterface.find(e => {
     return e.name === "value";
   });
@@ -26,32 +27,20 @@ const getValue = (url, address, privateFrom, privacyGroupId, privateKey) => {
   const functionCall = {
     to: address,
     data: functionAbi.signature,
-    privateFrom,
-    privacyGroupId,
-    privateKey
+    privacyGroupId
   };
 
-  return web3.eea
-    .sendRawTransaction(functionCall)
-    .then(transactionHash => {
-      return web3.priv.getTransactionReceipt(
-        transactionHash,
-        orion.node1.publicKey
-      );
-    })
-    .then(result => {
-      console.log(`GOT Value from ${url}:`, result.output);
-      return result;
-    });
+  return web3.priv.call(functionCall).then(result => {
+    console.log(`GOT Value from ${url}:`, result);
+    return result;
+  });
 };
 
 const getValueFromNode1 = (address, privacyGroupId) => {
   return getValue(
     besu.node1.url,
     address,
-    orion.node1.publicKey,
-    privacyGroupId,
-    besu.node1.privateKey
+    privacyGroupId
   );
 };
 
@@ -59,9 +48,7 @@ const getValueFromNode2 = (address, privacyGroupId) => {
   return getValue(
     besu.node2.url,
     address,
-    orion.node2.publicKey,
-    privacyGroupId,
-    besu.node2.privateKey
+    privacyGroupId
   );
 };
 
@@ -69,9 +56,7 @@ const getValueFromNode3 = (address, privacyGroupId) => {
   return getValue(
     besu.node3.url,
     address,
-    orion.node3.publicKey,
-    privacyGroupId,
-    besu.node3.privateKey
+    privacyGroupId
   );
 };
 
@@ -97,7 +82,7 @@ if (require.main === module) {
   const address = process.env.CONTRACT_ADDRESS;
   const privacyGroupId = process.env.PRIVACY_GROUP_ID;
 
-  console.log(`***** Getting values from smart contract Simple - ASYNCRHRONOUSLY *****`);
+  console.log(`***** Getting values from smart contract Simple - SYNCRHRONOUSLY *****`);
 
   getValueFromNode1(address, privacyGroupId)
     .catch(console.error);;
@@ -105,7 +90,6 @@ if (require.main === module) {
   getValueFromNode2(address, privacyGroupId)
     .catch(console.error);;
 
-  console.log(`EXPECTING AN ERROR: GETTING Value from: ${besu.node3.url}`);
   getValueFromNode3(address, privacyGroupId)
     .catch(console.error);;
 }
