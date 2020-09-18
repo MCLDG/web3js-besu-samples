@@ -21,7 +21,7 @@ cd src/multiNodePrivacyGroup
 node deployContractToPrivacyGroup.js
 ```
 
-Export the values that are returned when running the previous script:
+Export the values that are returned when running the previous script. NOT the values below, but ones in your terminal window:
 
 ```
  export CONTRACT_ADDRESS=0x4526be7db153e3c0488842a0b46368dc2fc26076

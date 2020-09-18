@@ -71,7 +71,7 @@ module.exports = async () => {
   );
 
   // get the transaction receipts of the privacy marker
-  await privacyGroup.getTransactionReceipts(
+  await privacyGroup.getTransactionReceipt(
     privacyMarkerTransactionResult.transactionHash
   ).then(privateTransactionReceipt => {
     console.log("Private Transaction Receipt for privacy marker TX\n", privateTransactionReceipt);
@@ -81,6 +81,7 @@ module.exports = async () => {
     console.log(`now you have to run:`);
     console.log(` export CONTRACT_ADDRESS=${contractAddress}`);
     console.log(` export PRIVACY_GROUP_ID=${privacyGroupId}`);
+    console.log(` export PRIVATE_CONTRACT_HASH=${privateTransactionHashOfContract}`);
   }, 2000);
 
   // get the transaction receipts of the private contract deployment

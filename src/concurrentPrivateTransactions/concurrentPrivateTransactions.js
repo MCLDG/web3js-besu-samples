@@ -75,7 +75,7 @@ const callGenericFunctionOnContract = (
 
 function printPrivTxDetails(pmtRcpt) {
   return privacyGroup
-    .getTransactionReceipts(pmtRcpt.transactionHash)
+    .getTransactionReceipt(pmtRcpt.transactionHash)
     .then(privTxRcpt => {
       console.log(
         `=== Private TX ${privTxRcpt.transactionHash}\n` +

@@ -114,17 +114,20 @@ const createPrivateContractNoPMT = (contractBinary, orionPrivateFrom, privacyGro
   return web3.priv.distributeRawTransaction(contractOptions);
 };
 
-const getPrivateContractAddress = (transactionHash, orionPrivateFrom) => {
+const getPrivateTransactionReceipt = (transactionHash, orionPrivateFrom) => {
   return web3.priv
     .getTransactionReceipt(transactionHash, orionPrivateFrom)
     .then(privateTransactionReceipt => {
       console.log("getPrivateContractAddress Private Transaction Receipt\n", privateTransactionReceipt);
-
-      return privateTransactionReceipt.contractAddress;
+      return privateTransactionReceipt;
     });
 };
 
-const getTransactionReceipts = txHash => {
+const getPrivateContractAddress = (transactionHash, orionPrivateFrom) => {
+  return getPrivateTransactionReceipt(transactionHash, orionPrivateFrom).contractAddress;
+};
+
+const getTransactionReceipt = txHash => {
   return new Promise((resolve, reject) => {
     web3.eth
       .getTransactionReceipt(txHash)
@@ -142,8 +145,9 @@ module.exports = {
   sendPrivacyMarkerTransaction,
   createPrivateContract,
   createPrivateContractNoPMT,
+  getPrivateTransactionReceipt,
   getPrivateContractAddress,
-  getTransactionReceipts
+  getTransactionReceipt
 };
 
 if (require.main === module) {
