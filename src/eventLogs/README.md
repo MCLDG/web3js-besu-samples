@@ -3,7 +3,7 @@
 Scripts:
 - `subscribe.js` - subscribe to new logs sent to the contract using the HTTP polling API
 - `subscribeWebSocket.js` - subscribe to new logs sent to the contract using the WebSocket pub-sub API
-- `getPastLogs.js` - get past logs
+- `getPastLogs.js` - get historical logs
 
 ## Usage
 Follow the instructions in ../multiNodePrivacyGroup/deployContractToPrivacyGroup.js to create the privacy group and deploy the smart contract.

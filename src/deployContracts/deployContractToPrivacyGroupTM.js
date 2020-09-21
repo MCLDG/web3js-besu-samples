@@ -14,6 +14,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const yaml = require('js-yaml');
 const Tx = require("ethereumjs-tx");
 
 const Web3 = require("web3");
@@ -63,7 +64,7 @@ module.exports = async () => {
   // returns the 32-byte enclave key. The enclave key is a pointer to the private transaction in Orion
   const enclaveKey = await privacyGroup.createPrivateContractNoPMT(
     binary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey
-    );
+  );
   console.log(`Enclave key: ${enclaveKey}`);
 
   const privacyMarkerTransactionResult = await privacyGroup.sendPrivacyMarkerTransaction(
@@ -78,10 +79,16 @@ module.exports = async () => {
   });
 
   setTimeout(() => {
-    console.log(`now you have to run:`);
-    console.log(` export CONTRACT_ADDRESS=${contractAddress}`);
-    console.log(` export PRIVACY_GROUP_ID=${privacyGroupId}`);
-    console.log(` export PRIVATE_CONTRACT_HASH=${privateTransactionHashOfContract}`);
+    // save the contract information to a file
+    const privateSimpleContract = {};
+    privateSimpleContract.privateSimpleContract = {};
+    privateSimpleContract.privateSimpleContract.privacyGroupId = privacyGroupId;
+    privateSimpleContract.privateSimpleContract.contractAddress = contractAddress;
+    privateSimpleContract.privateSimpleContract.privateTransactionHashOfContract = privateTransactionHashOfContract;
+
+    let yamlContracts = yaml.safeDump(privateSimpleContract);
+    fs.writeFileSync(path.join(__dirname, "../contracts.yaml"), yamlContracts, 'utf8');
+    console.log("Writing smart contract info to file ./contracts.yaml: ", yamlContracts);
   }, 2000);
 
   // get the transaction receipts of the private contract deployment

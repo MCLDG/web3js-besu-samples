@@ -2,8 +2,10 @@ const fs = require("fs");
 const path = require("path");
 
 const Web3 = require("web3");
+const EEAClient = require("web3-eea");
 const Tx = require("ethereumjs-tx");
-const EEAClient = require("../../src");
+
+const privacyGroup = require("../privacyGroupManagement/managePrivacyGroup");
 
 const { orion, besu } = require("../keys.js");
 
@@ -78,6 +80,18 @@ const getPrivateContractAddress = transactionHash => {
 };
 
 module.exports = () => {
+
+  console.log("Public Transaction Receipt\n", transactionReceipt);
+  logBuffer += `now you have to run:\n export PUBLIC_CONTRACT_ADDRESS=${
+    transactionReceipt.contractAddress
+  }\n`;
+  //return transactionReceipt.contractAddress;
+
+  console.log("Deploying public smart contract");
+  const receipt = await createPublicContract(binary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey);
+  console.log("Public Transaction Receipt\n", receipt);
+  const contractAddress = receipt.contractAddress;
+    
   return createPublicEventEmitter()
     .then(createPrivateCrossContractReader)
     .then(getPrivateContractAddress)

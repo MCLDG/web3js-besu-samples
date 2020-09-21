@@ -24,6 +24,7 @@ atlassian-ide-plugin.xml
 
 # MacOS
 .DS_Store
+
 .AppleDouble
 .LSOverride
 
@@ -32,4 +33,5 @@ coverage/
 .nyc_output/
 
 # temporary files
-example/eventLogs/params.json
+contracts.yaml
+build/

@@ -12,9 +12,9 @@
  *
  * SPDX-License-Identifier: MPL-2.0
  */
-pragma solidity >=0.4.0 <0.6.0;
+pragma solidity >=0.5.0 <0.6.0;
 
-import "./EventEmitter.sol";
+import "../Simple/Simple.sol";
 
 // compile with:
 // solc CrossContractReader.sol --bin --abi --optimize --overwrite -o .
@@ -23,18 +23,18 @@ import "./EventEmitter.sol";
 contract CrossContractReader {
     uint counter;
 
-    event NewEventEmitter(
+    event NewSimple(
         address contractAddress
     );
 
     function read(address emitter_address) view public returns (uint) {
-        EventEmitter em = EventEmitter(emitter_address);
+        Simple em = Simple(emitter_address);
         return em.value();
     }
 
     function deploy() public {
-        EventEmitter em = new EventEmitter();
-        emit NewEventEmitter(address(em));
+        Simple em = new Simple();
+        emit NewSimple(address(em));
     }
 
     function deployRemote(address crossAddress) public {

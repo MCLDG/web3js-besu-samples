@@ -94,6 +94,38 @@ const sendPrivacyMarkerTransaction = (enclaveKey, besuPrivateKey, nonce) => {
   });
 };
 
+const createPublicContract = (contractBinary, orionPrivateFrom, privacyGroupId, besuPrivateKey) => {
+  const besuAccount = web3.eth.accounts.privateKeyToAccount(
+    `0x${besuPrivateKey}`
+  );
+  return web3.eth
+    .getTransactionCount(besuAccount.address, "pending")
+    .then(count => {
+      const rawTx = {
+        nonce: web3.utils.numberToHex(count),
+        from: besuAccount.address,
+        value: 0,
+        to: null,
+        data: `0x${contractBinary}`,
+        gasPrice: "0xFFFFF",
+        gasLimit: "0xFFFFFF"
+      };
+      const tx = new Tx(rawTx);
+      tx.sign(Buffer.from(besuPrivateKey, "hex"));
+      const serializedTx = tx.serialize();
+      return web3.eth.sendSignedTransaction(
+        `0x${serializedTx.toString("hex")}`
+      );
+    })
+    .then(transactionReceipt => {
+      console.log("Public Transaction Receipt\n", transactionReceipt);
+      logBuffer += `now you have to run:\n export PUBLIC_CONTRACT_ADDRESS=${
+        transactionReceipt.contractAddress
+      }\n`;
+      return transactionReceipt.contractAddress;
+    });
+};
+
 const createPrivateContract = (contractBinary, orionPrivateFrom, privacyGroupId, besuPrivateKey) => {
   const contractOptions = {
     data: `${contractBinary}`,
@@ -124,7 +156,14 @@ const getPrivateTransactionReceipt = (transactionHash, orionPrivateFrom) => {
 };
 
 const getPrivateContractAddress = (transactionHash, orionPrivateFrom) => {
-  return getPrivateTransactionReceipt(transactionHash, orionPrivateFrom).contractAddress;
+  return new Promise((resolve, reject) => {
+    getPrivateTransactionReceipt(transactionHash, orionPrivateFrom)
+    .then(receipt => {
+      resolve(receipt.contractAddress);
+    })
+    .catch(reject);
+  });
+
 };
 
 const getTransactionReceipt = txHash => {
@@ -143,6 +182,7 @@ module.exports = {
   getPrivateNonce,
   getPublicNonce,
   sendPrivacyMarkerTransaction,
+  createPublicContract,
   createPrivateContract,
   createPrivateContractNoPMT,
   getPrivateTransactionReceipt,

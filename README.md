@@ -1,7 +1,14 @@
 # Besu privacy and permissions
 This repo started life as https://github.com/PegaSysEng/web3js-eea. I removed all the web3-eea code and refactored the examples to use the web3-eea npm library, instead of using the library source code that is merged into the repo. I also removed all the extraneous folders to make this a simple demo of how to use Besu.
 
-The goal is to show how to develop applications using Besu privacy and permissioning.
+The goal is to show how to develop applications using Besu privacy and permissioning. This repo supports the following features:
+
+* Create a privacy group and deploy a smart contract to the privacy group (see multiNodePrivacyGroup folder)
+* Store values in a smart contract in the privacy group. Do this from different nodes (see multiNodePrivacyGroup folder)
+* Retrieve values from a smart contract in the privacy group. Do this from different nodes (see multiNodePrivacyGroup folder)
+* Use on-chain privacy groups, a new feature in Besu v1.4 (see onChainPrivacyGroup folder)
+* Subscribe to log events (see eventLogs folder)
+
 
 ## Pre-requisites for Besu network
 You'll need to run a multi-node Besu network.
@@ -39,7 +46,13 @@ You can stop the Docker containers when you no longer need them:
 ./stop.sh 
 ```
 
-You can remove the Docker containers when you no longer need them:
+You can remove the Docker images & containers when you no longer need them:
+
+```
+./remove.sh 
+```
+
+You can clean the Docker network without removing the images, ready to ./run-privacy again:
 
 ```
 ./remove.sh 
@@ -65,7 +78,7 @@ Web3j requires the Java JDK, so install this first:
 brew cask install adoptopenjdk
 ```
 
-Then install web3j:
+Then install web3j. This is used to allow interaction with smart contracts from Java code.
 
 ```
 brew tap web3j/web3j
@@ -94,6 +107,9 @@ ls -lR ../../../../../org
 
 ## Deploy and execute the smart contract
 Details on how to deploy and execute the smart contracts can be found in each of the individual src folders.
+
+## Getting started
+Navigate to the multiNodePrivacyGroup folder, deploy a smart contract to a privacy group. Use the other scripts to interact with the smart contract, as documented in the README files in each folder.
 
 ## Troubleshooting
 If you see this error:

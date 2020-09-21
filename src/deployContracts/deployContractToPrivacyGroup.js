@@ -5,6 +5,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const yaml = require('js-yaml');
 
 const Web3 = require("web3");
 const EEAClient = require("web3-eea");
@@ -34,12 +35,22 @@ module.exports = async () => {
       privateTransactionHashOfContract = privateTransactionHash;
       return privacyGroup.getPrivateContractAddress(privateTransactionHash, orion.node1.publicKey)
     })
+    .then(contractAddress => {
+      console.log("contractAddress: ", contractAddress);
+      return contractAddress;
+    })
     .catch(console.error);
 
-  console.log(`now you have to run:`);
-  console.log(` export CONTRACT_ADDRESS=${contractAddress}`);
-  console.log(` export PRIVACY_GROUP_ID=${privacyGroupId}`);
-  console.log(` export PRIVATE_CONTRACT_HASH=${privateTransactionHashOfContract}`);
+  // save the contract information to a file
+  const privateSimpleContract = {};
+  privateSimpleContract.privateSimpleContract = {};
+  privateSimpleContract.privateSimpleContract.privacyGroupId = privacyGroupId;
+  privateSimpleContract.privateSimpleContract.contractAddress = contractAddress;
+  privateSimpleContract.privateSimpleContract.privateTransactionHashOfContract = privateTransactionHashOfContract;
+
+  let yamlContracts = yaml.safeDump(privateSimpleContract);  
+  fs.writeFileSync(path.join(__dirname, "../contracts.yaml"), yamlContracts, 'utf8');
+  console.log("Writing smart contract info to file ./contracts.yaml: ", yamlContracts);
 
   return { contractAddress, privacyGroupId };
 };

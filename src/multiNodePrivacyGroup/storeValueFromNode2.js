@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require("path");
+const yaml = require('js-yaml');
 
 const Web3 = require("web3");
 const EEAClient = require("web3-eea");
@@ -112,20 +113,20 @@ module.exports = {
 };
 
 if (require.main === module) {
-  if (!process.env.CONTRACT_ADDRESS) {
-    throw Error(
-      "You need to export the following variable in your shell environment: CONTRACT_ADDRESS="
-    );
+  let yamlContracts;
+  // Get the previoulsy stored contract information
+  try {
+    yamlContracts = yaml.safeLoad(fs.readFileSync(path.join(__dirname, "../contracts.yaml"), 'utf8'));
+    console.log("Reading contracts information: ", yamlContracts);
+  } catch (e) {
+    console.log("Error reading contracts information. Deploy a contract first: ", e);
   }
 
-  if (!process.env.PRIVACY_GROUP_ID) {
-    throw Error(
-      "You need to export the following variable in your shell environment: PRIVACY_GROUP_ID="
-    );
-  }
+  const privacyGroupId = yamlContracts.privateSimpleContract.privacyGroupId;
+  const address = yamlContracts.privateSimpleContract.contractAddress;
+  console.log("Contracts information. privacyGroupId: ", privacyGroupId);
+  console.log("Contracts information. Address: ", address);
 
-  const address = process.env.CONTRACT_ADDRESS;
-  const privacyGroupId = process.env.PRIVACY_GROUP_ID;
   storeValueFromNode2(address, 42, privacyGroupId)
     .then(() => {
       return getValueFromNode1(address, privacyGroupId);

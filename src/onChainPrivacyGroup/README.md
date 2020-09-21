@@ -14,7 +14,7 @@ cd besu-sample-networks
 You will need to wait 30-60s before executing any commands against the network.
 
 ## Deploy and execute the smart contract
-Create an on-chain privacy group and deploy the smart contract to the privacy group. The application `deployContract*.js` will create the contract as a private contract, and retrieve the private contract address. 
+Create an on-chain privacy group and deploy the smart contract to the privacy group. The application `deployContractOnChainPrivacyGroup.js` will create the contract as a private contract, and retrieve the private contract address. 
 
 ```
 cd onChainPrivacy
