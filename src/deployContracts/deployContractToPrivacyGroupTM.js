@@ -14,13 +14,12 @@
 
 const fs = require("fs");
 const path = require("path");
-const yaml = require('js-yaml');
-const Tx = require("ethereumjs-tx");
 
 const Web3 = require("web3");
 const EEAClient = require("web3-eea");
 
 const privacyGroup = require("../privacyGroupManagement/managePrivacyGroup");
+const configFileHandler = require("../config/configFileHandler");
 
 const { orion, besu } = require("../keys.js");
 
@@ -86,9 +85,7 @@ module.exports = async () => {
     privateSimpleContract.privateSimpleContract.contractAddress = contractAddress;
     privateSimpleContract.privateSimpleContract.privateTransactionHashOfContract = privateTransactionHashOfContract;
 
-    let yamlContracts = yaml.safeDump(privateSimpleContract);
-    fs.writeFileSync(path.join(__dirname, "../contracts.yaml"), yamlContracts, 'utf8');
-    console.log("Writing smart contract info to file ./contracts.yaml: ", yamlContracts);
+    configFileHandler.writeToConfigFile(privateSimpleContract);
   }, 2000);
 
   // get the transaction receipts of the private contract deployment

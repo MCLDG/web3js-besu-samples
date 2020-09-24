@@ -14,12 +14,9 @@ const EEAClient = require("web3-eea");
 const PromisePool = require("async-promise-pool");
 
 const privacyGroup = require("../privacyGroupManagement/managePrivacyGroup");
+const configFileHandler = require("../config/configFileHandler");
 
 const { orion, besu } = require("../keys.js");
-
-const greeterBinary = JSON.parse(fs.readFileSync(
-  path.join(__dirname, "../../build/contracts/greeter.json")
-)).bytecode;
 
 const greeterAbi = JSON.parse(fs.readFileSync(
   path.join(__dirname, "../../build/contracts/greeter.json")
@@ -99,18 +96,12 @@ function printPrivTxDetails(pmtRcpt) {
 */
 
 module.exports = async () => {
-  console.log("Creating privacy group");
-  const privacyGroupId = await privacyGroup.createPrivacyGroup([orion.node1.publicKey, orion.node2.publicKey]);
+  const yamlContracts = configFileHandler.readConfigFile();
 
-  console.log("Deploying smart contract to privacy group: ", privacyGroupId);
-  const greeterContractAddress = await privacyGroup
-    .createPrivateContract(greeterBinary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
-    .then(privateTransactionHash => {
-      console.log("Private Transaction Hash\n", privateTransactionHash);
-      return privacyGroup.getPrivateContractAddress(privateTransactionHash, orion.node1.publicKey)
-    })
-    .catch(console.error);
-  console.log("greeter smart contract deployed at address: ", greeterContractAddress);
+  const privacyGroupId = yamlContracts.privateGreeterContract.privacyGroupId;
+  const greeterContractAddress = yamlContracts.privateGreeterContract.contractAddress;
+  console.log("Contracts information. privacyGroupId: ", privacyGroupId);
+  console.log("Contracts information. Address: ", greeterContractAddress);
 
   const besuAccount = web3.eth.accounts.privateKeyToAccount(
     `0x${besu.node1.privateKey}`

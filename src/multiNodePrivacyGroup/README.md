@@ -17,15 +17,8 @@ You will need to wait 30-60s before executing any commands against the network.
 Create a privacy group and deploy the smart contract to the privacy group. The application `deployContract*.js` will create the contract as a private contract, and retrieve the private contract address. The difference between the two deployContract*.js scripts can be found in the header comments.
 
 ```
-cd src/multiNodePrivacyGroup
+cd src/deployContracts
 node deployContractToPrivacyGroup.js
-```
-
-Export the values that are returned when running the previous script. NOT the values below, but ones in your terminal window:
-
-```
- export CONTRACT_ADDRESS=0x4526be7db153e3c0488842a0b46368dc2fc26076
- export PRIVACY_GROUP_ID=TRJFQvFU+l/yuiIW2KWcTzVb2DRn/HDIEKDmDqotM9k=
 ```
 
 Query the privacy groups and their transaction counts:

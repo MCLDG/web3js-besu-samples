@@ -20,7 +20,7 @@ Each script in this folder deploys a smart contract, either a private smart cont
 * deployContractToPrivacyGroupTM.js: deploy the contract Simple.sol privately, while signing the private marker transaction using your own private key
 * deployContractOnChainPrivacyGroup: deploy the contract Greeter.sol privately, to an on-chain privacy group.
 
-As the smart contracts are deployed, metadata including contract address and (optional) privacy group ID are written to a file, './contracts.yaml', which is then read by other scripts to obtain the required metadata.
+As the smart contracts are deployed, metadata including contract address and (optional) privacy group ID are written to a file, '../contracts.yaml', which is then read by other scripts to obtain the required metadata.
 
 ## Example
 Create a privacy group and deploy the smart contract to the privacy group. The application `deployContractToPrivacyGroup.js` will create the contract as a private contract, and retrieve the private contract address. 

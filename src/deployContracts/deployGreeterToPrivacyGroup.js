@@ -11,8 +11,8 @@ const configFileHandler = require("../config/configFileHandler");
 
 const { orion, besu } = require("../keys.js");
 
-const binary = JSON.parse(fs.readFileSync(
-  path.join(__dirname, "../../build/contracts/Simple.json")
+const greeterBinary = JSON.parse(fs.readFileSync(
+  path.join(__dirname, "../../build/contracts/greeter.json")
 )).bytecode;
 
 module.exports = async () => {
@@ -22,9 +22,9 @@ module.exports = async () => {
   const privacyGroupId = await privacyGroup.createPrivacyGroup([orion.node1.publicKey, orion.node2.publicKey]);
   console.log("Created new privacy group with ID:", privacyGroupId);
 
-  console.log("Deploying Simple smart contract to privacy group: ", privacyGroupId);
+  console.log("Deploying Greeter smart contract to privacy group: ", privacyGroupId);
   const contractAddress = await privacyGroup
-    .createPrivateContract(binary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
+    .createPrivateContract(greeterBinary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
     .then(privateTransactionHash => {
       console.log("Private Transaction Hash\n", privateTransactionHash);
       privateTransactionHashOfContract = privateTransactionHash;
@@ -37,13 +37,13 @@ module.exports = async () => {
     .catch(console.error);
 
   // save the contract information to a file
-  const privateSimpleContract = {};
-  privateSimpleContract.privateSimpleContract = {};
-  privateSimpleContract.privateSimpleContract.privacyGroupId = privacyGroupId;
-  privateSimpleContract.privateSimpleContract.contractAddress = contractAddress;
-  privateSimpleContract.privateSimpleContract.privateTransactionHashOfContract = privateTransactionHashOfContract;
+  const privateGreeterContract = {};
+  privateGreeterContract.privateGreeterContract = {};
+  privateGreeterContract.privateGreeterContract.privacyGroupId = privacyGroupId;
+  privateGreeterContract.privateGreeterContract.contractAddress = contractAddress;
+  privateGreeterContract.privateGreeterContract.privateTransactionHashOfContract = privateTransactionHashOfContract;
 
-  configFileHandler.writeToConfigFile(privateSimpleContract);
+  configFileHandler.writeToConfigFile(privateGreeterContract);
 
   return { contractAddress, privacyGroupId };
 };

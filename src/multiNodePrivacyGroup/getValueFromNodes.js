@@ -4,10 +4,11 @@
 
 const fs = require('fs')
 const path = require("path");
-const yaml = require('js-yaml');
 
 const Web3 = require("web3");
 const EEAClient = require("web3-eea");
+
+const configFileHandler = require("../config/configFileHandler");
 
 const SimpleAbi = (JSON.parse(fs.readFileSync(
   path.join(__dirname, "../../build/contracts/Simple.json"), 'utf8')
@@ -83,14 +84,7 @@ module.exports = {
 };
 
 if (require.main === module) {
-  let yamlContracts;
-  // Get the previoulsy stored contract information
-  try {
-    yamlContracts = yaml.safeLoad(fs.readFileSync(path.join(__dirname, "../contracts.yaml"), 'utf8'));
-    console.log("Reading contracts information: ", yamlContracts);
-  } catch (e) {
-    console.log("Error reading contracts information. Deploy a contract first: ", e);
-  }
+  const yamlContracts = configFileHandler.readConfigFile();
 
   const privacyGroupId = yamlContracts.privateSimpleContract.privacyGroupId;
   const address = yamlContracts.privateSimpleContract.contractAddress;
