@@ -1,16 +1,25 @@
+const fs = require('fs')
+const path = require("path");
+
 const Web3 = require("web3");
 const Tx = require("ethereumjs-tx");
-const EEAClient = require("../../src");
-const EventEmitter = require("../solidity/EventEmitter/EventEmitter.json")
-  .output.abi;
-const CrossContractReader = require("../solidity/CrossContractReader/CrossContractReader.json")
-  .output.abi;
+const EEAClient = require("web3-eea");
+
+const configFileHandler = require("../config/configFileHandler");
+
+const SimpleAbi = (JSON.parse(
+  fs.readFileSync(path.join(__dirname, "../../build/contracts/Simple.json"), 'utf8'))
+).abi;
+
+const CrossContractReaderAbi = (JSON.parse(
+  fs.readFileSync(path.join(__dirname, "../../build/contracts/CrossContractReader.json"), 'utf8'))
+).abi;
 
 const { orion, besu } = require("../keys.js");
 
 const storeValueFromNode1 = (address, value) => {
   const web3 = new EEAClient(new Web3(besu.node1.url), 2018);
-  const contract = new web3.eth.Contract(EventEmitter);
+  const contract = new web3.eth.Contract(SimpleAbi);
 
   // eslint-disable-next-line no-underscore-dangl
   const functionAbi = contract._jsonInterface.find(e => {
@@ -32,8 +41,8 @@ const storeValueFromNode1 = (address, value) => {
         value: 0,
         to: address,
         data: `${functionAbi.signature + functionArgs}`,
-        gasPrice: "0xFFFFFF",
-        gasLimit: "0xFFFFFFF"
+        gasPrice: "0xFFFFF",
+        gasLimit: "0xFFFFF"
       };
       const tx = new Tx(rawTx);
       tx.sign(Buffer.from(besu.node1.privateKey, "hex"));
@@ -53,12 +62,12 @@ const getValue = (
   publicAddress,
   privateAddress,
   privateFrom,
-  privateFor,
+  privacyGroupId,
   privateKey
 ) => {
   const web3 = new EEAClient(new Web3(url), 2018);
 
-  const contract = new web3.eth.Contract(CrossContractReader);
+  const contract = new web3.eth.Contract(CrossContractReaderAbi);
 
   // eslint-disable-next-line no-underscore-dangl
   const functionAbi = contract._jsonInterface.find(e => {
@@ -73,7 +82,7 @@ const getValue = (
     to: privateAddress,
     data: functionAbi.signature + functionArgs,
     privateFrom,
-    privateFor,
+    privacyGroupId,
     privateKey
   };
 
@@ -91,13 +100,13 @@ const getValue = (
     });
 };
 
-const getValueFromNode1 = (publicAddress, privateAddress) => {
+const getValueFromNode1 = (publicAddress, privateAddress, privateFrom, privacyGroupId) => {
   return getValue(
     besu.node1.url,
     publicAddress,
     privateAddress,
-    orion.node1.publicKey,
-    [orion.node2.publicKey],
+    privateFrom,
+    privacyGroupId,
     besu.node1.privateKey
   );
 };
@@ -108,23 +117,20 @@ module.exports = {
 };
 
 if (require.main === module) {
-  if (!process.env.PUBLIC_CONTRACT_ADDRESS) {
-    throw Error(
-      "You need to export the following variable in your shell environment: PUBLIC_CONTRACT_ADDRESS="
-    );
-  }
+  const yamlContracts = configFileHandler.readConfigFile();
 
-  if (!process.env.PRIVATE_CONTRACT_ADDRESS) {
-    throw Error(
-      "You need to export the following variable in your shell environment: PRIVATE_CONTRACT_ADDRESS="
-    );
-  }
+  const publicSimpleContractAddress = yamlContracts.publicSimpleContract.contractAddress;
+  const privateCrossContractAddress = yamlContracts.privateCrossContract.contractAddress;
+  const privacyGroupId = yamlContracts.privateCrossContract.privacyGroupId;
+  console.log("Contracts information. publicSimpleContractAddress: ", publicSimpleContractAddress);
+  console.log("Contracts information. privateCrossContractAddress: ", privateCrossContractAddress);
+  console.log("Contracts information. privacyGroupId: ", privacyGroupId);
 
-  const publicAddress = process.env.PUBLIC_CONTRACT_ADDRESS;
-  const privateAddress = process.env.PRIVATE_CONTRACT_ADDRESS;
-  storeValueFromNode1(publicAddress, 1000)
+  console.log(`***** Store values using Cross Contract public/private smart contract *****`);
+
+  storeValueFromNode1(publicSimpleContractAddress, 1001)
     .then(() => {
-      return getValueFromNode1(publicAddress, privateAddress);
+      return getValueFromNode1(publicSimpleContractAddress, privateCrossContractAddress, orion.node1.publicKey, privacyGroupId);
     })
     .catch(console.log);
 }

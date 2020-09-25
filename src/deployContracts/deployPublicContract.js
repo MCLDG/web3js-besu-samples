@@ -31,9 +31,9 @@ module.exports = async () => {
         from: besuAccount.address,
         value: 0,
         to: null,
-        data: `0x${binary}`,
-        gasPrice: "0xf7b760",
-        gasLimit: "0xf7b760"
+        data: `${binary}`,
+        gasPrice: "0xFFFFF",
+        gasLimit: "0xFFFFF"
       };
       const tx = new Tx(rawTx);
       tx.sign(Buffer.from(besu.node1.privateKey, "hex"));

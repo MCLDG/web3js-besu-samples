@@ -11,7 +11,7 @@ const readConfigFile = () => {
         if (!fs.readFileSync(path.join(__dirname, "../contracts.yaml")))
             return;
         contracts = yaml.safeLoad(fs.readFileSync(path.join(__dirname, "../contracts.yaml"), 'utf8'));
-        console.log("Reading contracts information: ", contracts);
+        console.log("Reading contracts information: \n", contracts);
     } catch (e) {
         console.log("Error reading contracts information. Deploy a contract first: ", e);
     }
