@@ -22,6 +22,8 @@ npm install
 
 You will need to wait 30-60s before executing any commands against the network.
 
+If you see an error like this `Error: Invalid JSON RPC response: ""`, wait a little longer.
+
 Privacy in Besu can use Privacy Groups, where contracts and transactions are sent to groups of nodes,
 and Besu handle the distribution to the nodes in the group. Privacy groups can either be on-chain
 or off-chain. You'll need to start the Besu network in the right privacy mode, otherwise you may see an

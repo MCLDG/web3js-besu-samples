@@ -19,6 +19,7 @@ const Web3 = require("web3");
 const EEAClient = require("web3-eea");
 
 const privacyGroup = require("../privacyGroupManagement/managePrivacyGroup");
+const manageContract = require("../privacyGroupManagement/manageContract");
 const configFileHandler = require("../config/configFileHandler");
 
 const { orion, besu } = require("../keys.js");
@@ -61,17 +62,17 @@ module.exports = async () => {
   console.log("Created new privacy group with ID:", privacyGroupId);
 
   // returns the 32-byte enclave key. The enclave key is a pointer to the private transaction in Orion
-  const enclaveKey = await privacyGroup.createPrivateContractNoPMT(
-    binary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey
+  const enclaveKey = await manageContract.createPrivateContractNoPMT(
+    binary, null, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey
   );
   console.log(`Enclave key: ${enclaveKey}`);
 
-  const privacyMarkerTransactionResult = await privacyGroup.sendPrivacyMarkerTransaction(
+  const privacyMarkerTransactionResult = await manageContract.sendPrivacyMarkerTransaction(
     enclaveKey, besu.node1.privateKey
   );
 
   // get the transaction receipts of the privacy marker
-  await privacyGroup.getTransactionReceipt(
+  await manageContract.getTransactionReceipt(
     privacyMarkerTransactionResult.transactionHash
   ).then(privateTransactionReceipt => {
     console.log("Private Transaction Receipt for privacy marker TX\n", privateTransactionReceipt);

@@ -14,18 +14,18 @@ cd besu-sample-networks
 You will need to wait 30-60s before executing any commands against the network.
 
 ## Deploy and execute the smart contract
-Create an on-chain privacy group and deploy the smart contract to the privacy group. The application `deployContractOnChainPrivacyGroup.js` will create the contract as a private contract, and retrieve the private contract address. 
+Create the on-chain privacy group and deploy the ERC20 smart contract to the privacy group. The application `deployTokenOnChainPrivacyGroup.js` will create the contract as a private contract, and retrieve the private contract address. 
 
 ```
 cd src/deployContracts
-node deployContractOnChainPrivacyGroup.js
+node deployTokenOnChainPrivacyGroup.js
 ```
 
 Execute the smart contract functions:
 
 ```
-cd src/onChainPrivacyGroup
-node callContractOnChainPrivacyGroup.js
+cd erc20
+node erc20.js
 ```
 
 On chain privacy groups have dynamic membership. Now add & remove nodes to the on-chain privacy group:
@@ -33,3 +33,11 @@ On chain privacy groups have dynamic membership. Now add & remove nodes to the o
 ```
 node addRemoveNodes.js
 ```
+
+Call the smart contract again and see the differences:
+
+```
+cd erc20
+node erc20.js
+```
+

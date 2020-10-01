@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 
 const privacyGroup = require("../privacyGroupManagement/managePrivacyGroup");
+const manageContract = require("../privacyGroupManagement/manageContract");
 const configFileHandler = require("../config/configFileHandler");
 
 const { orion, besu } = require("../keys.js");
@@ -23,12 +24,12 @@ module.exports = async () => {
   console.log("Created new privacy group with ID:", privacyGroupId);
 
   console.log("Deploying Cross Contract smart contract to privacy group: ", privacyGroupId);
-  const contractAddress = await privacyGroup
-    .createPrivateContract(crossContractBinary, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
+  const contractAddress = await manageContract
+    .createPrivateContract(crossContractBinary, null, orion.node1.publicKey, privacyGroupId, besu.node1.privateKey)
     .then(privateTransactionHash => {
       console.log("Private Transaction Hash\n", privateTransactionHash);
       privateTransactionHashOfContract = privateTransactionHash;
-      return privacyGroup.getPrivateContractAddress(privateTransactionHash, orion.node1.publicKey)
+      return manageContract.getPrivateContractAddress(privateTransactionHash, orion.node1.publicKey)
     })
     .then(contractAddress => {
       console.log("contractAddress: ", contractAddress);
